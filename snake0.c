@@ -19,7 +19,7 @@ int current_direction = DIR_RIGHT;
 
 typedef struct position
 {
-    int y; ////////////change to float and make up dir increment by 0.5/
+    int y;
     int x;
 
 } position;
@@ -27,9 +27,9 @@ typedef struct position
 void start(position**, WINDOW**);
 void input(position*, int, WINDOW*);
 void new_enemy(position**, WINDOW*, bool*);
-void game_logic(position*, position*, int*, bool*, int*);
+void game_logic(position*, position*, int*, bool*);
 void move_player(position* player);
-void draw_screen(position*, position*, WINDOW*, bool);
+void draw_screen(position*, position*, WINDOW*, bool, int);
 void print_score(int);
 
 int main()
@@ -44,17 +44,16 @@ int main()
     start(&player, &game_win);
     move(0, 0);
     
-    while (1)
+    while ((input_ch = getch()) != 'o')
     {
         timeout(speed);
-        input_ch = getch();
         move(0, 0);
         print_score(score);
         move_player(player);
         new_enemy(&enemy, game_win, &enemy_spawned);
         input(player, input_ch, game_win);
-        game_logic(player, enemy, &score, &enemy_spawned, &speed);
-        draw_screen(player, enemy, game_win, enemy_spawned);
+        game_logic(player, enemy, &score, &enemy_spawned);
+        wrefresh(game_win);
     }
     
     endwin();
@@ -99,21 +98,39 @@ void start(position** player, WINDOW** game_win)
 
 void input(position* player, int input_ch, WINDOW* game_win)
 {
+    mvwaddch(game_win, player->y, player->x, ' ');
     switch (input_ch)
     {
         case 'a':
-            current_direction = DIR_LEFT;
+            if ((player->x - 1) != 0)
+            {
+                player->x--;
+                current_direction = DIR_LEFT;
+            }
             break;
         case 'd':
-            current_direction = DIR_RIGHT;
+            if ((player->x + 1) != 40)
+            {
+                player->x++;
+                current_direction = DIR_RIGHT;
+            }
             break;
         case 's':
-            current_direction = DIR_DOWN;
+            if ((player->y + 1) != 20)
+            {
+                player->y++;
+                current_direction = DIR_DOWN;
+            }
             break;
         case 'w':
-            current_direction = DIR_UP;
+            if ((player->y - 1) != 0)
+            {
+                player->y--;
+                current_direction = DIR_UP;
+            }
             break;
     }
+    mvwaddch(game_win, player->y, player->x, '#');
 }
 
 void new_enemy(position** enemy, WINDOW* game_win, bool* enemy_spawned)
@@ -134,43 +151,30 @@ void new_enemy(position** enemy, WINDOW* game_win, bool* enemy_spawned)
     }
 }
 
-void game_logic(position* player, position* enemy, int* score, bool* enemy_spawned, int* speed)
+void game_logic(position* player, position* enemy, int* score, bool* enemy_spawned)
 {
     if ((player->x == enemy->x) && (player->y == enemy->y))
     {
         *enemy_spawned = false;
         *score += 1;
-        *speed -= 5;
     }
     
 }
-void move_player(position* player) //automatically move player according to current_direction
-{ 
+void move_player(position* player)
+{
     switch (current_direction)
     {
     case DIR_RIGHT:
-        if ((player->x + 1) != 40)
-        {
-            player->x++;
-        }
+        player->x++;
         break;
     case DIR_LEFT:
-        if ((player->x - 1) != 0)
-        {
-            player->x--;
-        }
+        player->x--;
         break;
     case DIR_UP:
-        if ((player->y - 1) != 0)
-        {
-            player->y--;
-        }
+        player->y--;
         break;
     case DIR_DOWN:
-        if ((player->y + 1) != 20)
-        {
-            player->y++;
-        }
+        player->y++;
         break;
     }
 }
@@ -179,15 +183,4 @@ void print_score(int score)
 {
     printw("Score: %d        ", score);
 }
-
-void draw_screen(position* player, position* enemy, WINDOW* game_win, bool enemy_spawned)
-{
-    wclear(game_win);
-    box(game_win, 0, 0);
-    mvwaddch(game_win, enemy->y, enemy->x, '&');
-    mvwaddch(game_win, player->y, player->x, '#');
-    wrefresh(game_win);
-}
-
-
 
